@@ -1,1 +1,41 @@
-blog-video-ai │ ├── app │   │ │   ├── main.py │   │ │   ├── api │   │   └── routes │   │        └── video_routes.py │   │ │   ├── schemas │   │     └── video_schema.py │   │ │   ├── services │   │     ├── blog_extractor.py │   │     ├── script_generator.py │   │     ├── slide_generator.py │   │     ├── audio_generator.py │   │     └── video_renderer.py │   │ │   ├── workflows │   │     └── video_workflow.py │   │ │   ├── utils │   │     └── text_cleaner.py │ ├── assets │   ├── fonts │   ├── music │   └── templates │ ├── storage │   ├── slides │   ├── audio │   └── videos │ ├── tests │ ├── requirements.txt │ └── run.py
+blog-video-ai
+│
+├── app
+│   │
+│   ├── main.py
+│   │
+│   ├── api
+│   │   └── routes
+│   │        └── video_routes.py
+│   │
+│   ├── schemas
+│   │     └── video_schema.py
+│   │
+│   ├── services
+│   │     ├── blog_extractor.py
+│   │     ├── script_generator.py
+│   │     ├── slide_generator.py
+│   │     ├── audio_generator.py
+│   │     └── video_renderer.py
+│   │
+│   ├── workflows
+│   │     └── video_workflow.py
+│   │
+│   ├── utils
+│   │     └── text_cleaner.py
+│
+├── assets
+│   ├── fonts
+│   ├── music
+│   └── templates
+│
+├── storage
+│   ├── slides
+│   ├── audio
+│   └── videos
+│
+├── tests
+│
+├── requirements.txt
+│
+└── run.py
