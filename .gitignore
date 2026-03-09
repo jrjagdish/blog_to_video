@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+# For people using Conda
+.conda/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Secrets and Config
+.env
+*.log
+local_settings.py
+
+# Testing and Coverage
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+
+# IDE Specific
+.vscode/
+.idea/
+.DS_Store
