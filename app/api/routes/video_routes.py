@@ -1,3 +1,4 @@
+from app.utils.text_cleaner import sanitize_text
 from fastapi import APIRouter, HTTPException
 from app.schemas.video_schema import VideoRequest, VideoResponse, VideoJobResponse
 from bs4 import BeautifulSoup
@@ -7,7 +8,7 @@ router = APIRouter()
 
 
 @router.post("/generate-video")
-def generate_video(request: VideoRequest):
+async def generate_video(request: VideoRequest):
     if request.url:
         try:
             headers = {
@@ -22,9 +23,9 @@ def generate_video(request: VideoRequest):
                 ["script", "style", "nav", "footer", "header", "aside", "form"]
             ):
                 element.decompose()
-            print(soup.prettify())
+            result = await sanitize_text(soup.get_text())    
             title = soup.title.string if soup.title else "No Title"
             description = request.description
-            return {"data": soup.prettify(), "title": title, "description": description}
+            return {"data": result, "title": title, "description": description}
         except requests.RequestException as e:
             raise HTTPException(status_code=400, detail=f"Error fetching URL: {str(e)}")
