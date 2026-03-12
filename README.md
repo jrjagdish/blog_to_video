@@ -39,7 +39,7 @@ API Keys for Grok, Gemini, or DeepSeek
 
 Installation
 Bash
-git clone https://github.com/your-username/manim-agent.git
+git clone [https://github.com/your-username/manim-agent.git](https://github.com/jrjagdish/blog_to_video.git)
 cd manim-agent
 pip install -r requirements.txt
 Basic Usage
