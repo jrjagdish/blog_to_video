@@ -4,14 +4,12 @@ Since you are building a Self-Correction Video Generation Engine, your README ne
 Here is a structured documentation block you can copy and adapt for your README.md.
 
 🎬 Manim-Agent: Autonomous Video Generation
-Manim-Agent is an AI-powered video creation engine that transforms natural text into high-quality mathematical animations. By leveraging a multi-LLM "Council" (Grok, Gemini, and DeepSeek), this system automates the entire pipeline from storyboarding to error-corrected rendering.
+Manim-Agent is an AI-powered video creation engine that transforms natural text into high-quality mathematical animations. By leveraging a multi-LLM "Council" (Grok, Gemini), this system automates the entire pipeline from storyboarding to error-corrected rendering.
 
 🚀 How It Works
 The engine operates on a Code-Generation Loop that eliminates the need for expensive video-generation APIs by utilizing local rendering and intelligent text models.
 
 Directing (Grok AI): Interprets user intent and generates a structured storyboard/plan.
-
-Coding (DeepSeek-V3): Translates the storyboard into precise Manim (Python) code.
 
 Rendering (Manim Community): Executes the Python script locally to generate .mp4 files.
 
@@ -25,7 +23,7 @@ Backend: FastAPI
 
 Task Queue: Celery + Redis (for handling multiple video requests)
 
-LLMs: Grok (Creative), DeepSeek (Coding), Gemini (Debugging)
+LLMs: Grok (Creative), Gemini (Debugging)
 
 Render Engine: Manim Community Edition
 
