@@ -1,56 +1,55 @@
-# AI Video Architect SaaS
+Gemini said
+Since you are building a Self-Correction Video Generation Engine, your README needs to highlight the "Agentic" nature of the project—how it doesn't just write code, but "thinks," renders, and fixes itself.
 
-An enterprise-grade programmatic video generation product powered by Groq, Manim, Remotion, and Three.js.
+Here is a structured documentation block you can copy and adapt for your README.md.
 
-## Architecture
+🎬 Manim-Agent: Autonomous Video Generation
+Manim-Agent is an AI-powered video creation engine that transforms natural text into high-quality mathematical animations. By leveraging a multi-LLM "Council" (Grok, Gemini), this system automates the entire pipeline from storyboarding to error-corrected rendering.
 
-- **Backend (`/backend`)**: Python FastAPI orchestrator.
-  - Generates JSON schemas from prompts via Groq.
-  - Converts text to speech using `gTTS`.
-  - Dynamically runs `Manim` Python scripts for whiteboard & math animations.
-  - Stitches visual overlays and audio using `MoviePy`.
-- **Frontend (`/frontend`)**: Next.js & React Dashboard.
-  - Beautiful glassmorphism UI for users to type prompts.
-  - React Three Fiber & Remotion `<DynamicScene />` for rendering 3D programmatic videos directly in the browser.
-  - Real-time job polling from the backend.
+🚀 How It Works
+The engine operates on a Code-Generation Loop that eliminates the need for expensive video-generation APIs by utilizing local rendering and intelligent text models.
 
-## Quick Start Guide
+Directing (Grok AI): Interprets user intent and generates a structured storyboard/plan.
 
-### 1. Start the Backend
+Rendering (Manim Community): Executes the Python script locally to generate .mp4 files.
 
-Open a terminal and start the Python API:
+Self-Correction (Gemini): If a render fails, Gemini analyzes the Python traceback, identifies the logic error, and prompts DeepSeek for a fix.
 
-```bash
-cd backend
-# 1. Ensure dependencies are installed
+🏗️ Architecture & Scaling
+This project is designed to be horizontally scalable. You can host the API on a lightweight server while offloading the heavy rendering to dedicated GPU/CPU workers.
+
+The Tech Stack
+Backend: FastAPI
+
+Task Queue: Celery + Redis (for handling multiple video requests)
+
+LLMs: Grok (Creative), Gemini (Debugging)
+
+Render Engine: Manim Community Edition
+
+Storage: AWS S3 or Local Storage for rendered assets
+
+🛠️ Getting Started
+Prerequisites
+Python 3.10+
+
+Manim Dependencies (FFmpeg, LaTeX)
+
+API Keys for Grok, Gemini, or DeepSeek
+
+Installation
+Bash
+git clone [https://github.com/your-username/manim-agent.git](https://github.com/jrjagdish/blog_to_video.git)
+cd manim-agent
 pip install -r requirements.txt
+Basic Usage
+To generate a video from a text prompt, run:
 
-# 2. Add your Groq key
-# Open backend/.env and ensure you have:
-# GROQ_API_KEY=gsk_your_key_here
+Bash
+python main.py --prompt "Explain the Pythagorean theorem using a moving triangle"
+📈 Scalability Roadmap
+[ ] Worker Mode: Deploy rendering nodes as Docker containers.
 
-# 3. Start the server
-uvicorn main:app --reload
-```
-*Backend runs on http://localhost:8000*
+[ ] Voiceover Integration: Use Edge-TTS to sync AI narration with Manim timestamps.
 
-### 2. Start the Frontend
-
-Open a second terminal:
-
-```bash
-cd frontend
-
-# 1. Install standard dependencies (Next.js is already bootstrapping)
-npm install
-
-# 2. Install video engine dependencies
-npm install remotion @remotion/player @remotion/three three @react-three/fiber @react-three/drei
-
-# 3. Start the Next.js development server
-npm run dev
-```
-*Frontend runs on http://localhost:3000*
-
-## Usage
-Navigate to http://localhost:3000, type a prompt like *"Explain Quantum Computing"*, select your desired format, and watch the system orchestrate LLMs, audio, and video compositing pipeline in real-time!
+[ ] Web Dashboard: A React-based UI to track render progress and edit prompts.
