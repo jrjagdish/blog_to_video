@@ -1,122 +1,91 @@
 import os
-import json
-import asyncio
+import re
 import subprocess
-from groq import Groq
-import edge_tts
-from moviepy.editor import AudioFileClip
+import shutil
 from dotenv import load_dotenv
+from groq import Groq
+
 load_dotenv()
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# --- CONFIG ---
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Make sure to set this in your environment variables
-client = Groq(api_key=GROQ_API_KEY)
+SYSTEM_PROMPT = """
+You are a Manim expert.
+CRITICAL RULES:
+1. ALWAYS use 'from manim import *'.
+2. POSITIONING: Always call .next_to() or .shift() on the OBJECT, not the animation.
+   - WRONG: self.play(Write(Text("Hi")).next_to(obj))
+   - RIGHT: self.play(Write(Text("Hi").next_to(obj)))
+3. Animations: Use Create(shape), Write(text), FadeIn(obj), Transform(obj1, obj2).
+4. Colors: RED, BLUE, GREEN, YELLOW, WHITE, PURPLE, ORANGE.
+5. Content: Explain the topic using multiple shapes and labels.
+6. Return ONLY raw Python code.
+"""
 
-# --- 1. THE BRAINS: GROQ AI ---
-def generate_course_plan(topic):
-    prompt = f"""
-    Create a 4-scene educational video script about '{topic}'.
-    Return ONLY a JSON object with this structure:
-    {{
-      "title": "Course Title",
-      "scenes": [
-        {{
-          "title": "Scene Heading",
-          "narration": "Script for the AI voice (30 words)",
-          "keywords": "3 keywords for image search",
-          "color": "#hex_code_for_accent"
-        }}
-      ]
-    }}
-    Rules: Professional tone, interesting facts, valid JSON only.
-    """
+def pre_clean_code(code):
+    """Fix common AI syntax hallucinations before rendering."""
+    # Fix the .next_to() outside of play() animation call
+    # Matches: self.play(Write(Text("...")).next_to(...))
+    # Changes to: self.play(Write(Text("...").next_to(...)))
+    pattern = r"(self\.play\(Write\((.*?)\)\)\.next_to\((.*?)\))"
+    fixed_code = re.sub(pattern, r"self.play(Write(\2.next_to(\3)))", code)
     
-    chat_completion = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
+    # Ensure Star import is present
+    if "from manim import *" not in fixed_code:
+        fixed_code = "from manim import *\n" + fixed_code
+        
+    return fixed_code
+
+def get_ai_response(prompt, error_log=None):
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if error_log:
+        messages.append({"role": "user", "content": f"ERROR: {error_log}\nFix the syntax. Remember: .next_to() goes inside the animation call, e.g., self.play(Write(Text('...').next_to(obj)))"})
+    else:
+        messages.append({"role": "user", "content": f"Visualize: {prompt}. Use colorful shapes and text."})
+
+    completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-        response_format={"type": "json_object"}
+        messages=messages
     )
-    return json.loads(chat_completion.choices[0].message.content)
-
-# --- 2. THE VOICE: EDGE TTS ---
-async def get_voice_and_duration(text, path):
-    communicate = edge_tts.Communicate(text, "en-US-AndrewNeural") # Premium sounding male voice
-    await communicate.save(path)
-    # Get exact duration so the video matches the speech perfectly
-    return AudioFileClip(path).duration
-
-# --- 3. THE ENGINE: DYNAMIC VIDEO BAKER ---
-async def build_automated_video(topic):
-    print(f"🧠 AI is planning the course for: {topic}...")
-    plan = generate_course_plan(topic)
     
-    editly_spec = {
-        "width": 1920, "height": 1080, "fps": 30,
-        "outPath": f"./{topic.replace(' ', '_')}.mp4",
-        "defaults": {"transition": {"name": "fade", "duration": 0.5}},
-        "clips": []
-    }
+    content = completion.choices[0].message.content
+    content = re.sub(r"```python|```", "", content).strip()
+    return pre_clean_code(content)
 
-    for i, scene in enumerate(plan['scenes']):
-        audio_path = f"audio_{i}.mp3"
-        print(f"🎙️ Generating voice for Scene {i+1}...")
-        
-        # Calculate duration based on actual voiceover length
-        duration = await get_voice_and_duration(scene['narration'], audio_path)
-        
-        # Dynamically fetch image from Unsplash Source
-        img_query = scene['keywords'].replace(" ", ",")
-        img_url = f"https://source.unsplash.com/1600x900/?{img_query}"
+def render_video(code, attempt=1):
+    file_name = "syntax_fixed_scene.py"
+    with open(file_name, "w", encoding="utf-8") as f:
+        f.write(code)
 
-        clip = {
-            "duration": duration + 1.0, # Add a small buffer
-            "layers": [
-                # Background Gradient
-                {"type": "fill-color", "color": "#1a1a2e"},
-                
-                # Main Visual (The "Realistic" part)
-                {
-                    "type": "image",
-                    "path": img_url,
-                    "resizeMode": "cover",
-                    "opacity": 0.6
-                },
-                
-                # Progress Bar (Top)
-                {
-                    "type": "rect",
-                    "color": scene.get('color', '#00d2ff'),
-                    "originX": "left", "x": 0, "y": 0,
-                    "width": (i + 1) / len(plan['scenes']), "height": 0.02
-                },
-
-                # Modern Title Overlay
-                {
-                    "type": "title",
-                    "text": scene['title'],
-                    "textColor": "#ffffff",
-                    "style": { "fontWeight": "bold" }
-                },
-
-                # Subtitle / Narration Text (Helps retention)
-                {
-                    "type": "subtitle",
-                    "text": scene['narration'],
-                    "backgroundColor": "rgba(0,0,0,0.5)"
-                },
-                
-                # Audio Layer
-                {"type": "audio", "path": audio_path}
-            ]
-        }
-        editly_spec["clips"].append(clip)
-
-    with open("automated_spec.json", "w") as f:
-        json.dump(editly_spec, f)
+    print(f"\n--- 🎥 Rendering Attempt {attempt} ---")
     
-    print("🎬 Rendering final course video...")
-    subprocess.run(["editly", "automated_spec.json"])
+    result = subprocess.run(
+        ["manim", "-ql", "--media_dir", ".", file_name, "GeneratedScene"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        source_path = "videos/syntax_fixed_scene/480p15/GeneratedScene.mp4"
+        output_name = "final_explainer.mp4"
+        if os.path.exists(source_path):
+            shutil.copy(source_path, output_name)
+            print(f"✅ SUCCESS! Final video: {os.path.abspath(output_name)}")
+        return True
+    else:
+        print(f"❌ Attempt {attempt} failed.")
+        # Extract the specific line and error for the AI
+        error_lines = result.stderr.splitlines()
+        clean_error = "\n".join(error_lines[-8:]) 
+        
+        if attempt < 2:
+            print(f"Retrying with error context...")
+            new_code = get_ai_response(None, error_log=clean_error)
+            return render_video(new_code, attempt + 1)
+        else:
+            print("Traceback:\n", result.stderr)
+            return False
 
 if __name__ == "__main__":
-    user_topic = input("Enter the topic you want to learn: ")
-    asyncio.run(build_automated_video(user_topic))
+    topic = input("Topic for visual animation: ")
+    initial_code = get_ai_response(topic)
+    render_video(initial_code)
