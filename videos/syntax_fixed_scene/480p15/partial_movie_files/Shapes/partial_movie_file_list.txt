@@ -1,9 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/1584795214_1385312663_3259733690.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_374505139_699372706.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_4145898280_4083382067.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_137793841_2767367915.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_979058562_691500571.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_3055821041_2774280521.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_4039080388_1370704860.mp4'
-file 'file:C:/Users/Sunil/Desktop/videogenai/aivideo/videos/syntax_fixed_scene/480p15/partial_movie_files/Shapes/4072820271_1754310298_4107211499.mp4'
