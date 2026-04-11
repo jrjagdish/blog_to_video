@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow-Free AI Green Screen</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0f1a; color: white; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .nav { background: #161b2b; padding: 12px; width: 100%; display: flex; gap: 12px; justify-content: center; border-bottom: 2px solid #2d334a; position: sticky; top: 0; z-index: 10; }
+        .canvas-area { margin: 20px; position: relative; border: 4px solid #00ff00; border-radius: 8px; overflow: hidden; background: #00ff00; }
+        canvas { display: block; max-width: 95vw; max-height: 70vh; cursor: crosshair; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; background: #2d334a; color: white; }
+        .btn-active { background: #3b82f6 !important; }
+        .btn-download { background: #10b981; }
+        .controls { background: #161b2b; padding: 15px; border-radius: 12px; display: flex; gap: 25px; margin-bottom: 20px; border: 1px solid #2d334a; }
+        .label { font-size: 12px; color: #94a3b8; display: flex; flex-direction: column; gap: 5px; }
+        input[type="range"] { accent-color: #3b82f6; width: 160px; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <label class="btn" style="background: #3b82f6;">📁 Upload <input type="file" id="upload" hidden accept="image/*,video/*"></label>
+    <button id="eraseBtn" class="btn">🖌️ Erase Shadow</button>
+    <button id="restoreBtn" class="btn">🖌️ Restore</button>
+    <button id="clearBtn" class="btn">Reset All</button>
+    <button id="downloadBtn" class="btn btn-download">💾 Export PNG</button>
+</div>
+
+<div class="canvas-area">
+    <canvas id="output_canvas"></canvas>
+</div>
+
+<div class="controls">
+    <div class="label">
+        Shadow Killer (Edge Sharpness)
+        <input type="range" id="threshold" min="150" max="250" value="210">
+    </div>
+    <div class="label">
+        Brush Size
+        <input type="range" id="brushSize" min="5" max="150" value="40">
+    </div>
+    <div id="status" style="color:#10b981; font-weight:bold; align-self:center;">Ready</div>
+</div>
+
+<video id="input_video" style="display:none" loop muted playsinline></video>
+
+<script type="module">
+    const video = document.getElementById('input_video');
+    const canvas = document.getElementById('output_canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const manualMask = document.createElement('canvas');
+    const mCtx = manualMask.getContext('2d');
+
+    let isVideo = false;
+    let mode = 'none';
+    let currentSrc = null;
+
+    const ai = new SelfieSegmentation({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
+    });
+
+    ai.setOptions({ modelSelection: 1 });
+    ai.onResults(render);
+
+    function render(results) {
+        if (canvas.width !== results.image.width) {
+            canvas.width = results.image.width;
+            canvas.height = results.image.height;
+            manualMask.width = canvas.width;
+            manualMask.height = canvas.height;
+            mCtx.fillStyle = "white";
+            mCtx.fillRect(0,0, manualMask.width, manualMask.height);
+        }
+
+        // 1. Setup Buffers
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tCtx = tempCanvas.getContext('2d');
+
+        // Draw AI Mask to buffer to inspect pixels
+        tCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+        const aiData = tCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+        
+        // Draw Manual Mask to buffer
+        tCtx.clearRect(0,0, canvas.width, canvas.height);
+        tCtx.drawImage(manualMask, 0, 0);
+        const manualData = tCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        // Get Original Image Data
+        tCtx.drawImage(results.image, 0, 0);
+        const imgData = tCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imgData.data;
+
+        const limit = document.getElementById('threshold').value;
+
+        // 2. PIXEL CRUNCHING (Shadow & Gap Removal)
+        for (let i = 0; i < pixels.length; i += 4) {
+            const aiBrightness = aiData[i]; 
+            const isManualVisible = manualData[i+3] > 0;
+
+            // SHADOW KILLER LOGIC:
+            // If AI is unsure (below threshold) OR manual erase was used...
+            // Force pixel to PURE NEON GREEN
+            if (aiBrightness < limit || !isManualVisible) {
+                pixels[i] = 0;     // R
+                pixels[i+1] = 255; // G (Pure Green)
+                pixels[i+2] = 0;   // B
+                pixels[i+3] = 255; // A
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        if (isVideo && !video.paused) {
+            requestAnimationFrame(() => ai.send({image: video}));
+        }
+    }
+
+    // Tools
+    let drawing = false;
+    canvas.onmousedown = () => drawing = true;
+    window.onmouseup = () => drawing = false;
+    canvas.onmousemove = (e) => {
+        if (!drawing || mode === 'none') return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        
+        mCtx.save();
+        mCtx.globalCompositeOperation = (mode === 'erase') ? 'destination-out' : 'source-over';
+        mCtx.beginPath();
+        mCtx.arc(x, y, document.getElementById('brushSize').value, 0, Math.PI * 2);
+        mCtx.fillStyle = "white";
+        mCtx.fill();
+        mCtx.restore();
+
+        if(!isVideo && currentSrc) ai.send({image: currentSrc});
+    };
+
+    document.getElementById('upload').onchange = (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('video/')) {
+            isVideo = true; video.src = url;
+            video.onloadeddata = () => { video.play(); ai.send({image: video}); };
+        } else {
+            isVideo = false;
+            currentSrc = new Image(); currentSrc.src = url;
+            currentSrc.onload = () => ai.send({image: currentSrc});
+        }
+    };
+
+    document.getElementById('eraseBtn').onclick = () => {
+        mode = 'erase';
+        document.getElementById('eraseBtn').classList.add('btn-active');
+        document.getElementById('restoreBtn').classList.remove('btn-active');
+    };
+    document.getElementById('restoreBtn').onclick = () => {
+        mode = 'restore';
+        document.getElementById('restoreBtn').classList.add('btn-active');
+        document.getElementById('eraseBtn').classList.remove('btn-active');
+    };
+    document.getElementById('clearBtn').onclick = () => {
+        mCtx.fillStyle = "white"; mCtx.fillRect(0,0, manualMask.width, manualMask.height);
+        if(!isVideo && currentSrc) ai.send({image: currentSrc});
+    };
+    document.getElementById('downloadBtn').onclick = () => {
+        const a = document.createElement('a');
+        a.download = 'sharp_green_screen.png';
+        a.href = canvas.toDataURL();
+        a.click();
+    };
+</script>
+</body>
+</html>

@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-groq
-manim
-moviepy
-gTTS
-python-dotenv
-python-multipart
-pytest
