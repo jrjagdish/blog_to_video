@@ -48,8 +48,8 @@ To generate a video from a text prompt, run:
 Bash
 python main.py --prompt "Explain the Pythagorean theorem using a moving triangle"
 📈 Scalability Roadmap
-[ ] Worker Mode: Deploy rendering nodes as Docker containers.
+[ Worker Mode: Deploy rendering nodes as Docker containers.]
 
-[ ] Voiceover Integration: Use Edge-TTS to sync AI narration with Manim timestamps.
+[ ] Voiceover Integration: Use Edge-TTS to sync AI narration with Manim timestamps.]
 
-[ ] Web Dashboard: A React-based UI to track render progress and edit prompts.
+[ ] Web Dashboard: A React-based UI to track render progress and edit prompts.]
