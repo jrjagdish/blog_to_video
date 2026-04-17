@@ -1,1 +1,1 @@
-{"width": 1920, "height": 1080, "fps": 30, "outPath": "./course_output.mp4", "defaults": {"transition": {"name": "fade"}}, "clips": [{"duration": 5, "layers": [{"type": "fill-color", "color": "#fdf6e3"}, {"type": "image", "path": "https://images.unsplash.com/photo-1501004318641-729e8e26abd0?w=800", "resizeMode": "contain", "position": {"x": 0.5, "y": 0.4}, "width": 0.6}, {"type": "title", "text": "Photosynthesis", "textColor": "#0984e3", "fontPath": "./ArchitectsDaughter.ttf"}, {"type": "audio", "path": "audio_0.mp3"}]}]}
+
